@@ -116,6 +116,7 @@ class TweetImageServer(object):
         if not ret or 'errors' in ret:
             success = False
             rospy.logerr('Failed to post: {}'.format(ret))
+            self.server.set_aborted()
 
         res = TweetResult(success=success)
         if success:
