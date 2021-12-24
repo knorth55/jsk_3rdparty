@@ -1,7 +1,12 @@
 <launch>
   <arg name="run_app_manager" default="false" />
-  <arg name="credential" default="$(env GOOGLE_APPLICATION_CREDENTIALS)"/>
-  <arg name="project_id" default="$(env DIALOGFLOW_PROJECT_ID)"/>
+
+  <!-- options for dialogflow_client -->
+  <arg name="use_yaml" default="false" />
+  <arg name="yaml_file" default="" />
+
+  <arg name="credential" default="$(optenv GOOGLE_APPLICATION_CREDENTIALS)"/>
+  <arg name="project_id" default="$(optenv DIALOGFLOW_PROJECT_ID)"/>
 
   <!-- options for dialogflow_client -->
   <arg name="use_audio" default="false" />
@@ -25,6 +30,12 @@
       language: $(arg language)
       soundplay_action_name: $(arg soundplay_action_name)
       volume: $(arg volume)
+      use_yaml: $(arg use_yaml)
+    </rosparam>
+    <rosparam subst_value="true" if="$(arg use_yaml)">
+      yaml_file: $(arg yaml_file)
+    </rosparam>
+    <rosparam subst_value="true" unless="$(arg use_yaml)">
       project_id: $(arg project_id)
     </rosparam>
   </node>
