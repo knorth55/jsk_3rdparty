@@ -92,7 +92,6 @@ class DialogflowClient(object):
         self.session_id = None
         self.session_client = df.SessionsClient()
         self.queue = Queue.Queue()
-        self.last_spoken = rospy.Time(0)
 
         if self.use_tts:
             soundplay_action_name = rospy.get_param(
