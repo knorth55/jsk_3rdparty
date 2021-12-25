@@ -3,14 +3,13 @@
 
 import actionlib
 import dialogflow as df
+from google.oauth2.service_account import Credentials
 from google.protobuf.json_format import MessageToJson
-import os.path
 import pprint
 import Queue
 import rospy
 import threading
 import uuid
-import yaml
 
 from audio_common_msgs.msg import AudioData
 from sound_play.msg import SoundRequest
@@ -69,27 +68,6 @@ class State(object):
 class DialogflowClient(object):
 
     def __init__(self):
-        # use YAML for credential load
-        self.use_yaml = rospy.get_param('~use_yaml')
-
-        if self.use_yaml:
-            yaml_file = rospy.get_param('~yaml_file')
-            rospy.loginfo(
-                "Loading credential from yaml file: {}".format(yaml_file))
-            if not os.path.exists(yaml_file):
-                rospy.logerr(
-                    "Yaml file does not exists in {}".format(yaml_file))
-            with open(yaml_file, 'r') as f:
-                yaml_data = yaml.safe_load(f)
-            self.credential_json = yaml_data['credential_json']
-            # project id for google cloud service
-            self.project_id = yaml_data['project_id']
-        else:
-            rospy.loginfo("Loading credential from env")
-            self.credential_json = None
-            # project id for google cloud service
-            self.project_id = rospy.get_param("~project_id")
-
         # language for dialogflow
         self.language = rospy.get_param("~language", "ja-JP")
 
@@ -111,13 +89,25 @@ class DialogflowClient(object):
 
         self.state = State()
         self.session_id = None
+        self.queue = Queue.Queue()
+
+        self.credential_json = rospy.get_param('~credential_json', None)
         if self.credential_json is None:
+            rospy.loginfo("Loading credential json from env")
+            # project id for google cloud service
+            self.project_id = rospy.get_param("~project_id", None)
             self.session_client = df.SessionsClient()
         else:
-            self.session_client = df.SessionsClient.from_service_account_json(
+            rospy.loginfo("Loading credential json from rosparam")
+            credentials = Credentials.from_service_account_file(
                 self.credential_json
             )
-        self.queue = Queue.Queue()
+            self.project_id = credentials.project_id
+            self.session_client = df.SessionsClient(
+                credentials=credentials
+            )
+        if self.project_id is None:
+            rospy.logerr('project ID is not set')
 
         if self.use_tts:
             soundplay_action_name = rospy.get_param(
