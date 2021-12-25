@@ -57,6 +57,12 @@ class State(object):
     def __ne__(self, state):
         return not self.__eq__(state)
 
+    def __repr__(self):
+        return self._state
+
+    def __str__(self):
+        return self._state
+
 
 class DialogflowClient(object):
 
