@@ -151,7 +151,7 @@ class DialogflowClient(object):
             self.queue.put(msg)
             rospy.loginfo("Received input")
         else:
-            rospy.logdebug("Received input but ignored")
+            rospy.logwarn("Received input but ignored")
 
     def detect_intent_text(self, data, session):
         query = df.types.QueryInput(
