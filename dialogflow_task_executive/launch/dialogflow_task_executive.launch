@@ -1,7 +1,7 @@
 <launch>
   <arg name="run_app_manager" default="false" />
   <arg name="applist" default="" />
-  <arg name="credential" default="$(optenv GOOGLE_APPLICATION_CREDENTIALS)"/>
+  <arg name="credential" default="$(optenv GOOGLE_APPLICATION_CREDENTIALS)" doc="Read credentials JSON from this value when use_yaml is false." />
   <arg name="project_id" default="$(optenv DIALOGFLOW_PROJECT_ID)"/>
   <arg name="enable_hotword" default="true" />
 
@@ -13,8 +13,8 @@
   <arg name="volume" default="1.0" />
 
   <!-- options for dialogflow_client -->
-  <arg name="use_yaml" default="false" />
-  <arg name="yaml_file" default="" />
+  <arg name="use_yaml" default="false" doc="If this value is true, load credentials JSON from yaml_file. Please set yaml_file." />
+  <arg name="yaml_file" default="" doc="This value is valid when use_yaml is true." />
 
 
   <node name="speech_to_text_mux" pkg="topic_tools" type="mux"
