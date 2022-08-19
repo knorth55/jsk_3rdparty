@@ -49,6 +49,8 @@ if("$ENV{ROS_DISTRO}" STREQUAL "indigo")
   message(WARNING "To use this program, we need to run")
   message(WARNING "sed -i 's/upgrade_pip=True/upgrade_pip=False/' /opt/ros/indigo/share/catkin_virtualenv/cmake/build_venv.py")
   message(WARNING "to prevent upgrading to latest pip, which is not Python2 compatible")
+  # remove requirements.txt to avoid cmake rename error in docker
+  file(REMOVE_RECURSE requirements.txt)
   file(COPY requirements.txt.indigo DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
   file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt.indigo requirements.txt)
   catkin_generate_virtualenv(PYTHON_INTERPRETER python2)
