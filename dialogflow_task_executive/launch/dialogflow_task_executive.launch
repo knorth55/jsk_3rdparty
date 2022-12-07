@@ -18,6 +18,9 @@
   <node name="speech_to_text_mux" pkg="topic_tools" type="mux"
         args="/speech_to_text /speech_to_text_google /speech_to_text_julius" >
     <remap from="mux" to="speech_to_text_mux"/>
+    <rosparam>
+      initial_topic: /speech_to_text_google
+    </rosparam>
   </node>
 
   <group if="$(arg launch_dialogflow)">
