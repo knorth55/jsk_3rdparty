@@ -3,6 +3,7 @@
 
 import os
 import sys
+import threading
 import time
 
 import actionlib
@@ -48,8 +49,13 @@ class TweetImageServer(object):
             rospy.logwarn("sound_play version < 0.3.7 does not support 'sound_action' argument, so it uses robot_sound, instead of robot_sound_jp")
             self.client = SoundClient(
                 blocking=True)
+        self.image_topic_name = None
+        self.img = {}
+        self.lock = threading.Lock()
+
         self.server = actionlib.SimpleActionServer(
             '~tweet', TweetAction, self._execute_cb)
+
 
     def _execute_cb(self, goal):
         ret = None
@@ -57,8 +63,12 @@ class TweetImageServer(object):
         if goal.image:
             if os.path.exists(self.image_path):
                 os.remove(self.image_path)
+            self.image_topic_name = goal.image_topic_name
+            with self.lock:
+                self.img[self.image_topic_name] = None
             self.sub = rospy.Subscriber(
-                goal.image_topic_name, Image, self._image_cb)
+                self.image_topic_name, Image,
+                self._image_cb)
 
         if goal.warning and goal.speak:
             if goal.warning_time <= 0:
@@ -100,7 +110,7 @@ class TweetImageServer(object):
         if goal.image:
             now = rospy.Time.now()
             while ((rospy.Time.now() - now).to_sec() < self.image_timeout
-                    and not os.path.exists(self.image_path)):
+                    and self.img[self.image_topic_name] is None):
                 time.sleep(0.1)
                 if self.server.is_preempt_requested():
                     rospy.logerr('tweet image server preempted')
@@ -109,10 +119,12 @@ class TweetImageServer(object):
                     break
                 feedback = TweetFeedback(stamp=rospy.Time.now())
                 self.server.publish_feedback(feedback)
-            if success and os.path.exists(self.image_path):
+            if (success and self.img[self.image_topic_name] is not None):
+                with self.lock:
+                    cv2.imwrite(self.image_path, self.img[self.image_topic_name])
                 ret = self.api.post_media(goal.text, self.image_path)
             else:
-                rospy.logerr('cannot find image: {}'.format(self.image_path))
+                rospy.logerr('cannot subscribe image: {}'.format(self.image_topic_name))
                 ret = self.api.post_update(goal.text)
             self.sub.unregister()
             del self.sub
@@ -132,8 +144,10 @@ class TweetImageServer(object):
             self.server.set_aborted(res)
 
     def _image_cb(self, msg):
-        img = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-        cv2.imwrite(self.image_path, img)
+        if self.image_topic_name:
+            img = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            with self.lock:
+                self.img[self.image_topic_name] = img
 
 
 if __name__ == '__main__':
