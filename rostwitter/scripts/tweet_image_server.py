@@ -66,7 +66,7 @@ class TweetImageServer(object):
             self.image_topic_name = goal.image_topic_name
             with self.lock:
                 self.img[self.image_topic_name] = None
-            self.sub = rospy.Subscriber(
+            sub = rospy.Subscriber(
                 self.image_topic_name, Image,
                 self._image_cb)
 
@@ -126,8 +126,7 @@ class TweetImageServer(object):
             else:
                 rospy.logerr('cannot subscribe image: {}'.format(self.image_topic_name))
                 ret = self.api.post_update(goal.text)
-            self.sub.unregister()
-            del self.sub
+            sub.unregister()
         else:
             ret = self.api.post_update(goal.text)
 
